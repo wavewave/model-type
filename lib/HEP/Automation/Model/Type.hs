@@ -25,16 +25,6 @@ data ModelInfo = ModelInfo {
   model_ufo :: String 
 } deriving (Show,Typeable,Data)
 
-{- instance SafeCopy ModelInfo where 
-  putCopy m = contain $ do 
-                safePut $ model_name m
-                safePut $ model_baseurl m 
-                safePut $ model_feynrules m
-                safePut $ model_ufo m
-  getCopy = contain $ do 
-              ModelInfo <$> safeGet <*> safeGet <*> safeGet <*> safeGet
--}
-
 $(deriveSafeCopy 0 'base ''ModelInfo)
 
 type ModelInfoRepository = M.Map String ModelInfo 
