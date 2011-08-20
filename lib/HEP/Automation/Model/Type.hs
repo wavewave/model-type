@@ -29,15 +29,36 @@ $(deriveSafeCopy 0 'base ''ModelInfo)
 
 type ModelInfoRepository = M.Map String ModelInfo 
 
-addModel :: ModelInfo -> Update ModelInfoRepository () 
+addModel :: ModelInfo -> Update ModelInfoRepository (Maybe ModelInfo) 
 addModel minfo = do 
   m <- get 
-  put $ M.insert (model_name minfo) minfo m                           
+  let (r,m') = M.insertLookupWithKey (\k o n -> n) (model_name minfo) minfo m
+  put m'
+  return r
  
 queryModel :: String -> Query ModelInfoRepository (Maybe ModelInfo) 
 queryModel name = do 
   m <- ask 
   return (M.lookup name m)
 
-$(makeAcidic ''ModelInfoRepository [ 'addModel, 'queryModel ] )
+updateModel :: ModelInfo -> Update ModelInfoRepository (Maybe ModelInfo)
+updateModel minfo = do 
+  m <- get 
+  let (r,m') = M.updateLookupWithKey (\k n -> Just minfo) (model_name minfo) m
+  put m'
+  return r
+
+deleteModel :: String -> Update ModelInfoRepository (Maybe ModelInfo)
+deleteModel name = do 
+  m <- get
+  let r = M.lookup name m  
+  case r of 
+    Just _ -> do  
+      let m' = M.delete name m  
+      put m' 
+      return r
+    Nothing -> return Nothing
+
+
+$(makeAcidic ''ModelInfoRepository [ 'addModel, 'queryModel, 'updateModel, 'deleteModel] )
 
