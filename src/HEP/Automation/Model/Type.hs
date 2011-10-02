@@ -32,7 +32,7 @@ type ModelInfoRepository = M.Map String ModelInfo
 addModel :: ModelInfo -> Update ModelInfoRepository (Maybe ModelInfo) 
 addModel minfo = do 
   m <- get 
-  let (r,m') = M.insertLookupWithKey (\k o n -> n) (model_name minfo) minfo m
+  let (r,m') = M.insertLookupWithKey (\_k _o n -> n) (model_name minfo) minfo m
   put m'
   return r
  
@@ -41,10 +41,15 @@ queryModel name = do
   m <- ask 
   return (M.lookup name m)
 
+queryAll :: Query ModelInfoRepository [ModelInfo]
+queryAll = do m <- ask   
+              return (M.elems m)
+
+
 updateModel :: ModelInfo -> Update ModelInfoRepository (Maybe ModelInfo)
 updateModel minfo = do 
   m <- get 
-  let (r,m') = M.updateLookupWithKey (\k n -> Just minfo) (model_name minfo) m
+  let (r,m') = M.updateLookupWithKey (\_k _n -> Just minfo) (model_name minfo) m
   put m'
   return r
 
@@ -60,5 +65,5 @@ deleteModel name = do
     Nothing -> return Nothing
 
 
-$(makeAcidic ''ModelInfoRepository [ 'addModel, 'queryModel, 'updateModel, 'deleteModel] )
+$(makeAcidic ''ModelInfoRepository [ 'addModel, 'queryModel, 'queryAll, 'updateModel, 'deleteModel] )
 

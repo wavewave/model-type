@@ -10,5 +10,6 @@ data Model_type = Test
 test :: Model_type
 test = Test 
 
+mode :: Model_type
 mode = modes [test]
 
