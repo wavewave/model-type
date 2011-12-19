@@ -23,6 +23,9 @@ Library
   ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind
   ghc-prof-options: -caf-all -auto-all
   Build-Depends: 
-                   base>4, mtl>2, directory, filepath, containers, base>4, mtl>2, directory, filepath, containers, safecopy>0.5, acid-state>0.4, cmdargs
+                   base>4, mtl>2, directory, filepath, containers, base>4, 
+                   directory, filepath, containers, safecopy>0.5, 
+                   acid-state == 0.4.*, 
+                   cmdargs == 0.9.*
   Other-Modules: Paths_model_type
   exposed-modules:HEP.Automation.Model.Type, HEP.Automation.Model.Type.Command, HEP.Automation.Model.Type.Job, HEP.Automation.Model.Type.Type
