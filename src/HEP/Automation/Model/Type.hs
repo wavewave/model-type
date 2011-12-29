@@ -1,7 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable, 
              TemplateHaskell, 
              TypeFamilies, 
-             TypeSynonymInstances #-}
+             TypeSynonymInstances, 
+             OverloadedStrings  #-}
 
 module HEP.Automation.Model.Type where
 
@@ -15,12 +16,40 @@ import qualified Data.Map as M
 
 import Data.Acid 
 import Data.UUID
-import Data.UUID.V5 
+-- import Data.UUID.V1
+import Data.Aeson
+import Data.Text.Encoding as E
+import qualified Data.ByteString.Char8 as C
+import qualified Data.ByteString as B
+-- import qualified Data.ByteString.Lazy as L
+
 
 data ModelInfo = ModelInfo { 
   model_uuid :: UUID, 
   model_name :: String
 } deriving (Show,Typeable,Data)
+
+
+instance FromJSON UUID where
+  parseJSON x = do r <- return . fromString . C.unpack . E.encodeUtf8 =<< parseJSON x
+                   case r of 
+                     Nothing -> fail ("UUID parsing failed " ++ show x )
+                     Just uuid -> return uuid 
+
+instance ToJSON UUID where
+  toJSON = toJSON . E.decodeUtf8 . C.pack . toString 
+
+{-let str' = toString $ x
+                 str = C.pack str'  
+             in  trace ("x = " ++ show x ++ "\nstr' = " ++ show str' ++ "\nstr = " ++ C.unpack str) $  toJSON . E.decodeUtf8 $ str  -}
+
+
+instance FromJSON ModelInfo where
+  parseJSON (Object v) = ModelInfo <$>  v .: "uuid" <*> v .: "name"
+
+instance ToJSON ModelInfo where
+  toJSON (ModelInfo uuid name) = object [ "uuid" .= uuid , "name" .= name ] 
+
 
 instance SafeCopy UUID where 
   putCopy uuid = contain $ safePut (toByteString uuid) 
@@ -32,12 +61,12 @@ $(deriveSafeCopy 0 'base ''ModelInfo)
 
 type ModelInfoRepository = M.Map UUID ModelInfo 
 
-addModel :: ModelInfo -> Update ModelInfoRepository (Maybe ModelInfo) 
+addModel :: ModelInfo -> Update ModelInfoRepository ModelInfo 
 addModel minfo = do 
   m <- get 
   let (r,m') = M.insertLookupWithKey (\_k _o n -> n) (model_uuid minfo) minfo m
   put m'
-  return r
+  return minfo
  
 queryModel :: UUID -> Query ModelInfoRepository (Maybe ModelInfo) 
 queryModel uuid = do 
@@ -54,7 +83,7 @@ updateModel minfo = do
   m <- get 
   let (r,m') = M.updateLookupWithKey (\_ _ -> Just minfo) (model_uuid minfo) m
   put m'
-  return r
+  maybe (return Nothing) (const (return (Just minfo))) r 
 
 deleteModel :: UUID -> Update ModelInfoRepository (Maybe ModelInfo)
 deleteModel uuid = do 
