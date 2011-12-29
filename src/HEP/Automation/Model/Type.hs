@@ -16,13 +16,10 @@ import qualified Data.Map as M
 
 import Data.Acid 
 import Data.UUID
--- import Data.UUID.V1
 import Data.Aeson
 import Data.Text.Encoding as E
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
--- import qualified Data.ByteString.Lazy as L
-
 
 data ModelInfo = ModelInfo { 
   model_uuid :: UUID, 
@@ -38,11 +35,6 @@ instance FromJSON UUID where
 
 instance ToJSON UUID where
   toJSON = toJSON . E.decodeUtf8 . C.pack . toString 
-
-{-let str' = toString $ x
-                 str = C.pack str'  
-             in  trace ("x = " ++ show x ++ "\nstr' = " ++ show str' ++ "\nstr = " ++ C.unpack str) $  toJSON . E.decodeUtf8 $ str  -}
-
 
 instance FromJSON ModelInfo where
   parseJSON (Object v) = ModelInfo <$>  v .: "uuid" <*> v .: "name"
